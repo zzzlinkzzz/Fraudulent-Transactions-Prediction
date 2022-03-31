@@ -103,7 +103,8 @@ Các chênh lệch số dư nhằm tăng thêm đặc trưng giúp mô hình có
 # Kết quả huấn luyện tính trên toàn bộ dữ liệu huấn luyện:
 * Đoán đúng giao dịch gian lận / tổng số giao dịch gian lận thật sự: 91.45%
 * Đoán đúng giao dịch gian lận & giao dịch không gian lận / tổng số phiên: 98.74%
+
 | |Không gian lận| Gian lận|
 |---|---|---|
-Dự đoán không gian lận|2728114|702|
-Dự đoán gian lận|34082|7511|
+|Dự đoán không gian lận|2728114|702|
+|Dự đoán gian lận|34082|7511|
