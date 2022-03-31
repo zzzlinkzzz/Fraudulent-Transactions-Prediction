@@ -108,3 +108,19 @@ Các chênh lệch số dư nhằm tăng thêm đặc trưng giúp mô hình có
 |---|---|---|
 |Dự đoán không gian lận|2728114|702|
 |Dự đoán gian lận|34082|7511|
+
+Kết quả dự đoán phát hiện đúng 7.511 trường hợp gian lận thật sự, có 34082 giao dịch không gian lận nhưng sẽ bị ngân hàng xác minh, bỏ sót 702 trường hợp gian lận.
+
+Phân tích ma trận chi phí cho kết quả như sau:
+* Các giao dịch gian lận và không gian lận dự đoán đúng chiếm phần lớn giá trị giao dịch.
+* Tổng giá trị giao dịch gian lận bị phát hiện là 11.9 tỷ; giá trị trung bình các giao dịch gian lận bị phát hiện lên đến 1.59 triệu => các giao dịch gian lận giá trị lớn đã bị phát hiện.
+* Tổng giá trị giao dịch gian lận không bị phát hiện là 97 triệu; giá trị trung bình các giao dịch gian lận không bị phát hiện chỉ ở mức 138 nghìn => các giao dịch gian lận không phát hiện được là các giao dịch nhỏ.
+
+|status                    |count  |total_amount|amount_per_transaction|
+|--------------------------|-------|------------|----------------------|
+|Not Fraud - True predict  |2728114|861708.59   |315862.38             |
+|True Fraud - True predict |7511   |11959.46    |1592259.49            |
+|Not Fraud - False predict |34082  |5939.98     |174284.86             |
+|True Fraud - False predict|702    |96.95       |138111.63             |
+
+**Kết luận: mô hình đã phát hiện phần lớn các giao dịch gian lận có giá trị cao, có thể phục vụ hỗ trợ phòng chống và phát hiện kịp thời các giao dịch gian lận, nâng cao hiệu quả hoạt động quản lí rủi ro.**
