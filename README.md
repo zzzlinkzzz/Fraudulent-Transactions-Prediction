@@ -37,6 +37,8 @@ Scikit-learn
 
 # Phân tích dữ liệu
 
+* Các giao dịch trả hóa đơn, nộp tiền, debit không có đánh dấu gian lận, thực tế các giao dịch gian lận chủ yếu để rút tiền ra. Do đó các giao dịch có nhãn CASH_IN, PAYMENT, DEBIT sẽ bị loai khỏi dữ liệu huấn luyện. Dữ liệu huấn luyện còn 2.770.409 giao dịch.
+
 |    type|    num|isFraud|fraud_percent|flag|flag_percent|
 |--------|-------|-------|-------------|----|------------|
 |TRANSFER| 532909|   4097|         0.77|  16|         0.0|
@@ -45,5 +47,60 @@ Scikit-learn
 | PAYMENT|2151495|      0|          0.0|   0|         0.0|
 |   DEBIT|  41432|      0|          0.0|   0|         0.0|
 
-* Các giao dịch trả hóa đơn, nộp tiền, debit không có đánh dấu gian lận, thực tế các giao dịch gian lận chủ yếu để rút tiền ra. Do đó các giao dịch có nhãn CASH_IN, PAYMENT, DEBIT sẽ bị loai khỏi dữ liệu huấn luyện. Dữ liệu huấn luyện còn 2.770.409 giao dịch.
+* Phân tích tần suất giao dịch theo khung giờ cho thấy các giao dịch bình thường có quy luật hoạt động với tần suất cao ở khung giờ ban ngày và tần suất thấp ở khung giờ ban đêm. Các giao dịch gian lận diễn ra liên tục 24h trong ngày.
+
+<p align="center">
+<img src="./img/hour.png" width="600"/>
+</p>
+
+* Phân phối logagit của các số dư tài khoản có phân phối hình chuông và có xu hướng tập trung vào 1 khoảng hẹp, đồng thời đuôi dài chỉ số ít các giao dịch có số dư lớn.
+
+<p align="center">
+<img src="./img/density.png" width="600"/>
+</p>
+
+* Nếu coi các số dư tài khoản ít hơn 100 đơn vị tiền tệ là "hết tiền". Phân bổ số giao dịch gian lận có bảng trạng thái số dư tài khoản như bảng dưới. Có thể thấy phần lớn trường hợp tài khoản đi đều bị rút hết tiền. Tài khoản đến có 3 trạng thái chính:
+   - Tài khoản ban đầu không có tiền, sau đó có tiền từ tài khoản bị rút.
+   - Tài khoản có tiền và tiếp tục nhận tiền từ các giao dịch chuyển đến.
+   - Tài khoản không có tiền và sau khi nhận tiền đến thì nhanh chóng bị rút ra.
+
+|oldbalanceOrg_status|newbalanceOrig_status|oldbalanceDest_status|newbalanceDest_status|total_fraud|
+|--------------------|---------------------|---------------------|---------------------|-----------|
+|        in_the_money|         in_the_money|         in_the_money|         in_the_money|          2|
+|        in_the_money|         in_the_money|         in_the_money|         out_of_money|          0|
+|        in_the_money|         in_the_money|         out_of_money|         in_the_money|          0|
+|        in_the_money|         in_the_money|         out_of_money|         out_of_money|        158|
+|        in_the_money|         out_of_money|         in_the_money|         in_the_money|       2819|
+|        in_the_money|         out_of_money|         in_the_money|         out_of_money|         15|
+|        in_the_money|         out_of_money|         out_of_money|         in_the_money|       1265|
+|        in_the_money|         out_of_money|         out_of_money|         out_of_money|       3911|
+|        out_of_money|         out_of_money|         in_the_money|         in_the_money|         25|
+|        out_of_money|         out_of_money|         in_the_money|         out_of_money|          0|
+|        out_of_money|         out_of_money|         out_of_money|         in_the_money|         10|
+|        out_of_money|         out_of_money|         out_of_money|         out_of_money|          8|
+
+# Khai thác đặc trưng dữ liệu (feature engineering):
+
+Các biến gốc từ nguồn dữ liệu được đưa vào mô hình dự báo bao gồm:
+* step: khung thời gian xảy ra giao dịch, biến này được chia lấy phần dư cho 24 thành khung 24h mỗi ngày.
+* oldbalanceOrg, newbalanceOrig, oldbalanceDest, newbalanceDest: 4 trạng thái tài khoản đi và đến, trước và sau giao dịch.
+Các biến được tạo thêm từ các biến số dư tài khoản:
+* orig_change = newbalanceOrig - oldbalanceOrg : chênh lệch tài khoản đi trước và sau giao dịch
+* dest_change = newbalanceDest - oldbalanceDest : chênh lệch tài khoản đến trước và sau giao dịch
+* oldbalance_diff = oldbalanceOrg - oldbalanceDest : chênh lệch tài khoản đi và tài khoản đến trước khi giao dịch
+* newbalance_diff = newbalanceOrig - newbalanceDest : chênh lệch tài khoản đi và tài khoản đến sau khi giao dịch
+* orig_change_vs_amount = newbalanceOrig - oldbalanceOrg - amount : chênh lệch tài khoản đi trước và sau giao dịch so với số tiền chuyển.
+* dest_change_vs_amount = newbalanceDest - oldbalanceDest - amount : chênh lệch tài khoản đến trước và sau giao dịch so với số tiền chuyển.
+
+Các chênh lệch số dư nhằm tăng thêm đặc trưng giúp mô hình có thêm dữ liệu phân lớp. Các chênh lệch số dư này cũng phản ánh đặc trưng của giao dịch.
+
+# Xử lí mất cân bằng nhãn huấn luyện và huấn luyện mô hình:
+
+* Do số lượng giao dịch gian lận chỉ chiếm tỷ lệ nhỏ trong rất nhiều giao dịch, do đó mô hình có thể gặp hiện tượng bias nếu không xử lí mất cân bằng. Phương pháp trong trường hợp này là Undersampling với phương pháp NearMiss. Cụ thể là giữ nguyên các giao dịch có nhãn gian lận, lấy ngẫu nhiên các giao dịch không gian lận với số lượng tương đương số giao dịch gian lận nhưng vẫn đảm bảo phân phối của số giao dịch không gian lận ban đầu.
+* Phân chia tập huấn luyện - tập kiểm tra với tỷ lệ 7 - 3. Tỷ lệ này đảm bảo mô hình học được nhiều đặc trưng và giảm overfit tốt nhất.
+* Sử dụng mô hình XGBoostClassifier với các tham số sau: learning_rate = 0.01, max_depth=18, reg_lambda=3.8, n_estimators=500
+
+# Kết quả huấn luyện tính trên toàn bộ dữ liệu huấn luyện:
+* Đoán đúng giao dịch gian lận / tổng số giao dịch gian lận thật sự: 91.45%
+* Đoán đúng giao dịch gian lận & giao dịch không gian lận / tổng số phiên: 98.74%
 
